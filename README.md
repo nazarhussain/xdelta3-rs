@@ -7,3 +7,9 @@
 Bindings to `xdelta3` for Rust. Current version uses `xdelta3 3.0.12_APL`.
 
 For documentation, please see https://docs.rs/xdelta3/
+
+## Building
+
+### Linux MUSL architecture
+
+To build for `linux-musl-*` architectures install `clang-dev` package via `apk add clang-dev`.
