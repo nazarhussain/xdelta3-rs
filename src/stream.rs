@@ -28,7 +28,7 @@ impl<R: AsyncRead + Unpin> SrcBuffer<R> {
 
         let mut src: binding::xd3_source = unsafe { std::mem::zeroed() };
         src.blksize = blksize as u32;
-        src.max_winsize = max_winsize as u64;
+        src.max_winsize = max_winsize;
 
         let mut buf = Vec::with_capacity(max_winsize);
         buf.resize(max_winsize, 0u8);
@@ -118,7 +118,7 @@ impl<R: AsyncRead + Unpin> SrcBuffer<R> {
             src.max_blkno = src.curblkno;
             src.onlastblk = src.onblk;
         } else {
-            src.max_blkno = (self.block_offset + self.block_count - 1) as u64;
+            src.max_blkno = self.block_offset + self.block_count - 1;
             src.onlastblk = (self.read_len % src.blksize as usize) as u32;
         }
     }

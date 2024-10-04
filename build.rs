@@ -7,6 +7,8 @@ use std::fs::File;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::mem;
+use libc;
 
 fn add_def(v: &mut Vec<(String, String)>, key: &str, val: &str) {
     v.push((key.to_owned(), val.to_owned()));
@@ -14,15 +16,19 @@ fn add_def(v: &mut Vec<(String, String)>, key: &str, val: &str) {
 
 fn main() {
     let mut defines = Vec::new();
-    for i in &[
-        "size_t",
-        "unsigned int",
-        "unsigned long",
-        "unsigned long long",
-    ] {
-        let def_name = format!("SIZEOF_{}", i.to_uppercase().replace(" ", "_"));
-        defines.push((def_name, check_native_size(i)));
-    }
+    // for i in &[
+    //     "size_t",
+    //     "unsigned int",
+    //     "unsigned long",
+    //     "unsigned long long",
+    // ] {
+    //     let def_name = format!("SIZEOF_{}", i.to_uppercase().replace(" ", "_"));
+    //     defines.push((def_name, check_native_size(i)));
+    // }
+    add_def(&mut defines, "SIZEOF_SIZE_T", mem::size_of::<libc::size_t>().to_string().as_str());
+    add_def(&mut defines, "SIZEOF_SIZE_UNSIGNED_INT", mem::size_of::<libc::c_uint>().to_string().as_str());
+    add_def(&mut defines, "SIZEOF_SIZE_UNSIGNED_LONG", mem::size_of::<libc::c_ulong>().to_string().as_str());
+    add_def(&mut defines, "SIZEOF_SIZE_UNSIGNED_LONG_LONG", mem::size_of::<libc::c_ulonglong>().to_string().as_str());
     add_def(&mut defines, "SECONDARY_DJW", "1");
     add_def(&mut defines, "SECONDARY_FGK", "1");
     add_def(&mut defines, "EXTERNAL_COMPRESSION", "0");
