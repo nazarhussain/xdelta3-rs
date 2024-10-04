@@ -29,8 +29,11 @@ structopt = "0.3"
 [build-dependencies]
 cc = "1.1.24"
 rand = "0.6"
-bindgen = "0.70.1"
+bindgen = { version = "0.70.1", default-features = true }
 pkg-config = { version = "0.3", optional = true }
+
+['cfg(target.aarch64-unknown-linux-musl)'.build-dependencies]
+bindgen = { version = "0.70.1", default-features = false, features = ["logging", "prettyplease", "static"] }
 
 [features]
 default = ["stream"]
