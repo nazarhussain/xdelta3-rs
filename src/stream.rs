@@ -5,6 +5,15 @@ use std::ops::Range;
 use super::binding;
 use log::debug;
 
+
+#[cfg(not(target_os = "windows"))]
+type UnsingedSize = usize;
+
+// While compiling for windows the usize attributes are tend to be considered u64 
+// from the binding file generated from bindgen
+#[cfg(target_os = "windows")]
+type UnsingedSize = u64;
+
 #[allow(unused)]
 const XD3_DEFAULT_WINSIZE: usize = 1 << 23;
 const XD3_DEFAULT_SRCWINSZ: usize = 1 << 26;
@@ -22,13 +31,13 @@ struct SrcBuffer<R> {
 
 impl<R: AsyncRead + Unpin> SrcBuffer<R> {
     async fn new(mut read: R) -> Option<Self> {
-        let block_count = 64;
+        let block_count: usize = 64;
         let max_winsize = XD3_DEFAULT_SRCWINSZ;
         let blksize = max_winsize / block_count;
 
         let mut src: binding::xd3_source = unsafe { std::mem::zeroed() };
         src.blksize = blksize as u32;
-        src.max_winsize = max_winsize;
+        src.max_winsize = max_winsize as UnsingedSize;
 
         let mut buf = Vec::with_capacity(max_winsize);
         buf.resize(max_winsize, 0u8);
@@ -118,7 +127,7 @@ impl<R: AsyncRead + Unpin> SrcBuffer<R> {
             src.max_blkno = src.curblkno;
             src.onlastblk = src.onblk;
         } else {
-            src.max_blkno = self.block_offset + self.block_count - 1;
+            src.max_blkno = (self.block_offset + self.block_count - 1) as UnsingedSize;
             src.onlastblk = (self.read_len % src.blksize as usize) as u32;
         }
     }
