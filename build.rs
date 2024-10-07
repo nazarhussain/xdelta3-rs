@@ -1,12 +1,8 @@
 extern crate bindgen;
 extern crate cc;
 
-use rand::Rng;
 use std::env;
-use std::fs::File;
-use std::io::Write;
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::path::PathBuf;
 use std::mem;
 use libc;
 
@@ -16,15 +12,6 @@ fn add_def(v: &mut Vec<(String, String)>, key: &str, val: &str) {
 
 fn main() {
     let mut defines = Vec::new();
-    // for i in &[
-    //     "size_t",
-    //     "unsigned int",
-    //     "unsigned long",
-    //     "unsigned long long",
-    // ] {
-    //     let def_name = format!("SIZEOF_{}", i.to_uppercase().replace(" ", "_"));
-    //     defines.push((def_name, check_native_size(i)));
-    // }
     add_def(&mut defines, "SIZEOF_SIZE_T", mem::size_of::<libc::size_t>().to_string().as_str());
     add_def(&mut defines, "SIZEOF_SIZE_UNSIGNED_INT", mem::size_of::<libc::c_uint>().to_string().as_str());
     add_def(&mut defines, "SIZEOF_SIZE_UNSIGNED_LONG", mem::size_of::<libc::c_ulong>().to_string().as_str());
@@ -78,59 +65,4 @@ fn main() {
             .write_to_file(out_path.join("bindings.rs"))
             .expect("Couldn't write bindings!");
     }
-}
-
-fn check_native_size(name: &str) -> String {
-    let code = format!("#include <stdint.h>\n#include <stdio.h>\nint main() {{printf(\"%lu\", sizeof({})); return 0;}}\n", name);
-
-    return execute_c_code(code);
-}
-
-fn execute_c_code(code: String) -> String {
-    let compiler = cc::Build::new().get_compiler();
-    let output_dir = &env::var("OUT_DIR").unwrap();
-    let key = rand::thread_rng().gen::<i32>();
-
-    let src_path = String::from(
-        Path::new(output_dir)
-            .join(format!("src-{}.c", key))
-            .to_str()
-            .expect(&format!("Can not compute the src path for src-{}.c", key)),
-    );
-
-    let output_path = String::from(
-        Path::new(output_dir)
-            .join(format!("out-{}", key))
-            .to_str()
-            .expect(&format!("Can not compute the out path for out-{}", key)),
-    );
-
-    File::create(&src_path)
-        .expect(&format!("Can not create src file {}", src_path))
-        .write_all(code.as_bytes())
-        .expect(&format!("Can not write src file {}", src_path));
-
-    #[cfg(windows)]
-    let output_path = format!("{}.exe", output_path);
-
-    let mut compile_cmd = Command::new(compiler.path().as_os_str());
-
-    if compiler.is_like_msvc() {
-        compile_cmd.args(&[&src_path, &format!("/Fe{}", output_path)]);
-    } else {
-        compile_cmd.args(&[&src_path, "-o", &output_path]);
-    }
-
-    compile_cmd
-        .output()
-        .expect(&format!("Can not compile {}", &src_path));
-
-    let mut command = Command::new(&output_path);
-    let output = command
-        .output()
-        .expect("Error executing get-native-sizes-binary")
-        .stdout;
-    let output = String::from_utf8(output).expect("Error converting Unicode sequence");
-
-    return output;
 }
